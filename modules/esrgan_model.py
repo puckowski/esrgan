@@ -151,7 +151,7 @@ class UpscalerESRGAN(Upscaler):
         return img
 
     def load_model(self, path: str):
-        path = ".\models\ESRGAN\ESRGAN_4x.pth"
+        path = "./models/ESRGAN/ESRGAN_4x.pth"
         filename = path
         
         if not os.path.exists(filename) or filename is None:
