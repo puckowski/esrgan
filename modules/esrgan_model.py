@@ -7,7 +7,9 @@ from PIL import Image
 import modules.esrgan_model_arch as arch
 from modules import images, devices
 from modules.upscaler import Upscaler, UpscalerData
-from modules.shared import opts
+from modules.images import opts
+
+
 
 def mod2normal(state_dict):
     # this code is copied from https://github.com/victorca25/iNNfer
@@ -136,7 +138,7 @@ class UpscalerESRGAN(Upscaler):
             scalers.append(scaler_data)
         for file in model_paths:
             name = "ESRGAN_4x"
-
+            
             scaler_data = UpscalerData(name, file, self, 4)
             self.scalers.append(scaler_data)
 
@@ -149,13 +151,14 @@ class UpscalerESRGAN(Upscaler):
         return img
 
     def load_model(self, path: str):
-        path = ".\\models\\ESRGAN\\ESRGAN_4x.pth"
+        path = ".\models\ESRGAN\ESRGAN_4x.pth"
         filename = path
+        
         if not os.path.exists(filename) or filename is None:
             print("Unable to load %s from %s" % (self.model_path, filename))
             return None
 
-        state_dict = torch.load(filename, map_location='cpu' if devices.device_esrgan.type == 'mps' else None)
+        state_dict = torch.load(filename, map_location=None)
 
         if "params_ema" in state_dict:
             state_dict = state_dict["params_ema"]

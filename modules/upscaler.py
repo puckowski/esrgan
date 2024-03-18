@@ -2,16 +2,16 @@ import os
 from abc import abstractmethod
 
 import PIL
-import numpy as np
-import torch
 from PIL import Image
+import torch
 
-import modules.shared
-from modules import modelloader, shared
+from modules import modelloader
+from modules.images import opts
 
 LANCZOS = (Image.Resampling.LANCZOS if hasattr(Image, 'Resampling') else Image.LANCZOS)
 NEAREST = (Image.Resampling.NEAREST if hasattr(Image, 'Resampling') else Image.NEAREST)
 
+device = device_interrogate = device_gfpgan = device_esrgan = device_codeformer = torch.device("cuda")
 
 class Upscaler:
     name = None
@@ -27,18 +27,18 @@ class Upscaler:
 
     def __init__(self, create_dirs=False):
         self.mod_pad_h = None
-        self.tile_size = modules.shared.opts.ESRGAN_tile
-        self.tile_pad = modules.shared.opts.ESRGAN_tile_overlap
-        self.device = modules.shared.device
+        self.tile_size = opts.ESRGAN_tile
+        self.tile_pad = opts.ESRGAN_tile_overlap
+        self.device = device
         self.img = None
         self.output = None
         self.scale = 1
-        self.half = not modules.shared.cmd_opts.no_half
+        self.half = False
         self.pre_pad = 0
         self.mod_scale = None
 
         if self.model_path is None and self.name:
-            self.model_path = os.path.join(shared.models_path, self.name)
+            self.model_path = os.path.join("models", self.name)
         if self.model_path and create_dirs:
             os.makedirs(self.model_path, exist_ok=True)
 

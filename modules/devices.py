@@ -4,9 +4,6 @@ import torch
 import torch_directml
 from modules import errors
 from modules.sd_hijack_utils import CondFunc
-from packaging import version
-from functools import reduce
-import operator
 from modules import errors
 
 if sys.platform == "darwin":
