@@ -36,7 +36,7 @@ def calculate_sha256(file_content):
 async def call_script(filename):
     out_filename = filename
     try:
-        subprocess.run([".\\venv\\Scripts\\python.exe", "launch.py", "--disable-nan-check", "--opt-sub-quad-attention", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename)], check=True)
+        subprocess.run(["python", "esr.py", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename)], check=True)
         return out_filename
     except subprocess.CalledProcessError as e:
         return {"error": f"Error executing script: {e}"}

@@ -1,5 +1,6 @@
 import importlib
 from PIL import Image
+import sys
 
 from modules.esrgan_model import UpscalerESRGAN
 
@@ -52,4 +53,4 @@ def webui(arg1, arg2):
         
 
 if __name__ == "__main__":
-    webui(".\\uploads\\stone_1.png", "out2.png")
+    webui(str(sys.argv[1]), str(sys.argv[2]))
