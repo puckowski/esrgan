@@ -135,5 +135,5 @@ async def get_hash(id: str):
 
 @app.get("/download/{filename}")
 async def download_file(filename: str):
-    file_path = os.path.join(UPLOAD_FOLDER, filename)  # Replace "your_directory" with the directory containing your files
+    file_path = os.path.join(DOWNLOAD_FOLDER, filename)  # Replace "your_directory" with the directory containing your files
     return FileResponse(file_path, filename=filename)
