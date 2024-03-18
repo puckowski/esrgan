@@ -3,14 +3,11 @@ import os
 import numpy as np
 import torch
 from PIL import Image
-from basicsr.utils.download_util import load_file_from_url
 
 import modules.esrgan_model_arch as arch
-from modules import modelloader, images, devices
+from modules import images, devices
 from modules.upscaler import Upscaler, UpscalerData
 from modules.shared import opts
-
-
 
 def mod2normal(state_dict):
     # this code is copied from https://github.com/victorca25/iNNfer
@@ -138,10 +135,7 @@ class UpscalerESRGAN(Upscaler):
             scaler_data = UpscalerData(self.model_name, self.model_url, self, 4)
             scalers.append(scaler_data)
         for file in model_paths:
-            if "http" in file:
-                name = self.model_name
-            else:
-                name = modelloader.friendly_name(file)
+            name = "ESRGAN_4x"
 
             scaler_data = UpscalerData(name, file, self, 4)
             self.scalers.append(scaler_data)
@@ -155,12 +149,8 @@ class UpscalerESRGAN(Upscaler):
         return img
 
     def load_model(self, path: str):
-        if "http" in path:
-            filename = load_file_from_url(url=self.model_url, model_dir=self.model_path,
-                                          file_name="%s.pth" % self.model_name,
-                                          progress=True)
-        else:
-            filename = path
+        path = ".\\models\\ESRGAN\\ESRGAN_4x.pth"
+        filename = path
         if not os.path.exists(filename) or filename is None:
             print("Unable to load %s from %s" % (self.model_path, filename))
             return None
