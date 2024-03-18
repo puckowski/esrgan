@@ -5,10 +5,10 @@ import torch
 from PIL import Image
 
 import modules.esrgan_model_arch as arch
-from modules import images, devices
+from modules import images
 from modules.upscaler import Upscaler, UpscalerData
 from modules.images import opts
-
+from modules.upscaler import device_esrgan
 
 
 def mod2normal(state_dict):
@@ -146,7 +146,7 @@ class UpscalerESRGAN(Upscaler):
         model = self.load_model(selected_model)
         if model is None:
             return img
-        model.to(devices.device_esrgan)
+        model.to(device_esrgan)
         img = esrgan_upscale(model, img)
         return img
 
@@ -192,7 +192,7 @@ def upscale_without_tiling(model, img):
     img = img[:, :, ::-1]
     img = np.ascontiguousarray(np.transpose(img, (2, 0, 1))) / 255
     img = torch.from_numpy(img).float()
-    img = img.unsqueeze(0).to(devices.device_esrgan)
+    img = img.unsqueeze(0).to(device_esrgan)
     with torch.no_grad():
         output = model(img)
     output = output.squeeze().float().cpu().clamp_(0, 1).numpy()
