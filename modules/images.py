@@ -11,8 +11,6 @@ from fonts.ttf import Roboto
 import string
 import json
 
-from modules import errors
-
 class OptionInfo:
     def __init__(self, default=None, label=""):
         self.default = default
@@ -85,7 +83,6 @@ class Options:
             try:
                 self.data_labels[key].onchange()
             except Exception as e:
-                errors.display(e, f"changing setting {key} to {value}")
                 setattr(self, key, oldval)
                 return False
 

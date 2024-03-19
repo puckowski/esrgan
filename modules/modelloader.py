@@ -4,9 +4,6 @@ import shutil
 import importlib
 from urllib.parse import urlparse
 
-from modules.paths import script_path, models_path
-
-
 def load_models(model_path: str, model_url: str = None, command_path: str = None, ext_filter=None, download_name=None, ext_blacklist=None) -> list:
     """
     A one-and done loader to try finding the desired models in specified directories.
@@ -74,32 +71,6 @@ def friendly_name(file: str):
     file = os.path.basename(file)
     model_name, extension = os.path.splitext(file)
     return model_name
-
-
-def cleanup_models():
-    # This code could probably be more efficient if we used a tuple list or something to store the src/destinations
-    # and then enumerate that, but this works for now. In the future, it'd be nice to just have every "model" scaler
-    # somehow auto-register and just do these things...
-    root_path = script_path
-    src_path = models_path
-    dest_path = os.path.join(models_path, "Stable-diffusion")
-    move_files(src_path, dest_path, ".ckpt")
-    move_files(src_path, dest_path, ".safetensors")
-    src_path = os.path.join(root_path, "ESRGAN")
-    dest_path = os.path.join(models_path, "ESRGAN")
-    move_files(src_path, dest_path)
-    src_path = os.path.join(models_path, "BSRGAN")
-    dest_path = os.path.join(models_path, "ESRGAN")
-    move_files(src_path, dest_path, ".pth")
-    src_path = os.path.join(root_path, "gfpgan")
-    dest_path = os.path.join(models_path, "GFPGAN")
-    move_files(src_path, dest_path)
-    src_path = os.path.join(root_path, "SwinIR")
-    dest_path = os.path.join(models_path, "SwinIR")
-    move_files(src_path, dest_path)
-    src_path = os.path.join(root_path, "repositories/latent-diffusion/experiments/pretrained_models/")
-    dest_path = os.path.join(models_path, "LDSR")
-    move_files(src_path, dest_path)
 
 
 def move_files(src_path: str, dest_path: str, ext_filter: str = None):
