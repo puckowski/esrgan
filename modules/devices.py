@@ -3,18 +3,12 @@ import contextlib
 import torch
 import torch_directml
 from modules import errors
-from modules.sd_hijack_utils import CondFunc
-from modules import errors
-
-if sys.platform == "darwin":
-    from modules import mac_specific
 
 
 def has_mps() -> bool:
     if sys.platform != "darwin":
         return False
-    else:
-        return mac_specific.has_mps
+
 
 def extract_device_id(args, name):
     for x in range(len(args)):
@@ -219,7 +213,3 @@ class Conv2d(torch.nn.Conv2d):
             return super().forward(x.float()).type(x.dtype)
         else:
             return super().forward(x)
-
-
-if torch_directml.is_available():
-    CondFunc('torchsde._brownian.brownian_interval._randn', lambda _, size, dtype, device, seed: torch.randn(size, dtype=dtype, device=torch.device("cpu"), generator=torch.Generator(torch.device("cpu")).manual_seed(int(seed))).to(device), lambda _, size, dtype, device, seed: device.type == 'privateuseone')
