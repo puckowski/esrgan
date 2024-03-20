@@ -37,9 +37,10 @@ def webui(arg1, arg2):
                 # Replace fully transparent pixel with white
                 image.putpixel((x, y), (255, 255, 255, 255))  # RGBA value for white
 
-    image.save("tmp.png")
+    tmp_filename = arg1 + "_tmp.png"
+    image.save(tmp_filename)
 
-    image = Image.open("tmp.png")
+    image = Image.open(tmp_filename)
     image  = image.convert('RGB')
 
     # upscale the image using RealESRGAN
