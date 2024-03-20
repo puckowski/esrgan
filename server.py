@@ -1,10 +1,11 @@
 import os
 import hashlib
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
 import subprocess
 import sys
 from fastapi.responses import FileResponse
 from PIL import Image
+import time
 
 def is_image_less_than_768x768(image_path):
     try:
@@ -33,13 +34,49 @@ def calculate_sha256(file_content):
     sha256_hash.update(file_content)
     return sha256_hash.hexdigest()
 
-async def call_script(filename):
-    out_filename = filename
+tasks = []
+task_count = 0
+
+def get_and_remove_first_task(tasks_array):
+    if tasks_array:
+        return tasks_array.pop(0)  # Removes and returns the first element from the array
+    else:
+        return None
+    
+async def call_script(filename, background_tasks: BackgroundTasks):
+    global task_count
+
+    print("task count: " + str(task_count))
+
+    tasks.append(filename)
+
     try:
-        subprocess.run(["python", "esr.py", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename)], check=True)
-        return out_filename
+        # Get and remove the first task from the array
+        first_task = get_and_remove_first_task(tasks)
+        if first_task:
+            out_filename = filename
+            task_count += 1
+
+            print("processing " + filename)
+
+            subprocess.run(["python", "esr.py", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename)], check=True)
+            
+            task_count -= 1
+
+        return {"status": "processed"}
     except subprocess.CalledProcessError as e:
         return {"error": f"Error executing script: {e}"}
+    finally:
+        task_count -= 1
+
+        time.sleep(5)  # Sleep for 5 seconds
+
+        # Get and remove the first task from the array
+        first_task = get_and_remove_first_task(tasks)
+        if first_task:
+            background_tasks.add_task(call_script, first_task, background_tasks)
+        else:
+            print("No task to add")
     
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
@@ -62,8 +99,7 @@ async def upload_file(file: UploadFile = File(...)):
     
     return {"filename": sha256_hash, "status": "uploaded"}
 
-@app.get("/status/{id}")
-async def check_upload_status(id: str):
+def check_if_processed(id: str):
     files = os.listdir(UPLOAD_FOLDER)
     for filename in files:
         # Find the index of the last occurrence of "_"
@@ -80,7 +116,15 @@ async def check_upload_status(id: str):
             filename_parts = [filename]
 
         if filename_parts[0].endswith(id):
-            return {"filename": filename, "status": "uploaded"}
+            return filename
+    
+    return False
+
+@app.get("/status/{id}")
+async def check_upload_status(id: str):
+    filename = check_if_processed(id)
+    if filename:    
+        return {"filename": filename, "status": "uploaded"}
     return {"id": id, "status": "not found"}
 
 @app.get("/process/{id}")
@@ -108,7 +152,7 @@ def is_image_filename(filename):
     return filename.lower().endswith(('.png', '.jpg', '.jpeg'))
 
 @app.get("/run/{id}")
-async def get_hash(id: str):
+async def get_hash(id: str, background_tasks: BackgroundTasks):
     files = os.listdir(UPLOAD_FOLDER)
     for filename in files:
         # Find the index of the last occurrence of "_"
@@ -125,12 +169,16 @@ async def get_hash(id: str):
             filename_parts = [filename]
 
         if filename_parts[0].endswith(id):
-            if is_image_less_than_768x768(os.path.join(UPLOAD_FOLDER, filename)) and is_image_filename(os.path.join(UPLOAD_FOLDER, filename)):
+            processed_filename = check_if_processed(filename)
+
+            if processed_filename == False and is_image_less_than_768x768(os.path.join(UPLOAD_FOLDER, filename)) and is_image_filename(os.path.join(UPLOAD_FOLDER, filename)):
                 try:
-                    out_filename = await call_script(filename)
-                    return {"file": out_filename}
+                    background_tasks.add_task(call_script, filename, background_tasks)
+                    return {"status": "submitted"}
                 except Exception as e:
                     return {"error": str(e)}
+            elif processed_filename:
+                return {"status": "done" }
     return {"error": "could not process" }
 
 @app.get("/download/{filename}")

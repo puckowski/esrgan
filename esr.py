@@ -29,7 +29,7 @@ def replace_high_rgb_with_transparent(image_path):
             r, g, b, a = image.getpixel((x, y))
             
             # Check if red, green, and blue values are greater than 200
-            if r > 200 and g > 200 and b > 200:
+            if r > 225 and g > 225 and b > 225:
                 # Replace the pixel with fully transparent
                 image.putpixel((x, y), (0, 0, 0, 0))
     
