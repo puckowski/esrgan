@@ -309,6 +309,6 @@ async def process_purchase(purchase_request: PurchaseRequest):
     
     return {"message": "Purchase processed successfully", "credit_card_number": credit_card_number, "token": new_uuid}
 
-@app.get("/credits")
+@app.get("/credits/{token}")
 async def process_purchase(token: str):
     return {"credits": credit_dict[token]}
