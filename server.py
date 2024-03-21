@@ -233,7 +233,9 @@ async def check_upload_status(id: str, token: str):
 
             print(task_id + " , " + filename_parts[0] + " , " + id)
 
-            if filename_parts[0] != id:
+            if filename_parts[0].endswith(id):
+                return {"status": "processing"}
+            else:
                 try:
                     # Get the index of the string
                     index = all_tasks.index(id)
@@ -244,8 +246,6 @@ async def check_upload_status(id: str, token: str):
                     return {"status": "refunded"}
                 except ValueError:
                     return {"id": id, "status": "not found"}
-            else:
-                return {"status": "processing"}
         
 def check_if_run(id: str):
     files = os.listdir(DOWNLOAD_FOLDER)
