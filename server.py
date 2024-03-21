@@ -259,9 +259,9 @@ async def process_purchase(purchase_request: PurchaseRequest):
 
     new_uuid = uuid.uuid4()
 
-    while new_uuid == "0c74fad5-7ae9-487b-8b49-8800ca511e50":
+    while str(new_uuid) == "0c74fad5-7ae9-487b-8b49-8800ca511e50":
         new_uuid = uuid.uuid4()
 
-    credit_dict[new_uuid] = 5
+    credit_dict[str(new_uuid)] = 5
     
     return {"message": "Purchase processed successfully", "credit_card_number": credit_card_number, "token": new_uuid}
