@@ -202,6 +202,7 @@ def check_if_run(id: str):
             # If no dot found after the last underscore, consider the whole filename as the first part
             filename_parts = [filename]
 
+        print("fnp: " + filename_parts[0])
         if filename_parts[0].endswith(id):
             return filename
     return None
