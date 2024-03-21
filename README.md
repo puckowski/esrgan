@@ -1,6 +1,6 @@
 # ESRGAN image upscaler
 
-Paperspace requirements in ```paperspace.txt```.
+Paperspace requirements in ```requirements.txt```.
 
 ```
 python esr.py .\uploads\stone_1.png out2.png
