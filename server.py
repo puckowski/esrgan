@@ -211,7 +211,7 @@ async def check_process_status(id: str):
     has_run = check_if_run(id)
 
     if has_run != None:
-            return {"filename": filename, "status": "processed"}
+            return {"filename": has_run, "status": "processed"}
     return {"id": id, "status": "not found"}
 
 def is_image_filename(filename):
