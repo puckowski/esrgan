@@ -53,11 +53,12 @@ async def call_script(filename, background_tasks: BackgroundTasks):
     global task_id
 
     print("task id: " + task_id)
+    print("filename: " + filename)
 
-    filename = check_if_processed(task_id)
+    processed_filename = check_if_processed(task_id)
     tasks.append(filename)
 
-    if task_id == "" or filename != False: 
+    if task_id == "" or processed_filename != False: 
         try:
             # Get and remove the first task from the array
             first_task = get_and_remove_first_task(tasks)
