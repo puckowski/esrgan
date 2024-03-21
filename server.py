@@ -7,6 +7,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from PIL import Image
 import time
 from datetime import datetime, timedelta
+import uuid
+from pydantic import BaseModel
 
 def is_image_less_than_768x768(image_path):
     try:
@@ -38,6 +40,8 @@ def calculate_sha256(file_content):
 tasks = []
 task_count = 0
 ip_request_count = {}
+credit_dict = {}
+credit_dict["0c74fad5-7ae9-487b-8b49-8800ca511e50"] = 99
 
 def get_and_remove_first_task(tasks_array):
     if tasks_array:
@@ -95,6 +99,16 @@ def get_request_count(ip):
 
 def get_ip(request: Request):
     return request.client.host
+
+def get_credit_count(uuid): 
+    if uuid in credit_dict:
+        return credit_dict[uuid]
+    else:
+        return 0
+    
+def decrement_credit_count(uuid):
+    if uuid in credit_dict:
+        credit_dict[uuid] -= 1
 
 @app.middleware("http")
 async def check_request_limit(request: Request, call_next):
@@ -154,7 +168,14 @@ async def check_upload_status(id: str):
     filename = check_if_processed(id)
     if filename:    
         return {"filename": filename, "status": "uploaded"}
-    return {"id": id, "status": "not found"}
+    else:
+        try:
+            # Get the index of the string
+            index = tasks.index(id)
+
+            return {"id": id, "status": index}
+        except ValueError:
+            return {"id": id, "status": "not found"}
 
 @app.get("/process/{id}")
 async def check_process_status(id: str):
@@ -180,8 +201,17 @@ async def check_process_status(id: str):
 def is_image_filename(filename):
     return filename.lower().endswith(('.png', '.jpg', '.jpeg'))
 
-@app.get("/run/{id}")
-async def get_hash(id: str, background_tasks: BackgroundTasks):
+class ProcessRequest(BaseModel):
+    id: str
+    token: str
+
+@app.post("/run")
+async def get_hash(process_request: ProcessRequest, background_tasks: BackgroundTasks):
+    if get_credit_count(process_request.token) > 0:
+        decrement_credit_count(process_request.token)
+    else:
+        return {"error": "could not process" }
+        
     files = os.listdir(UPLOAD_FOLDER)
     for filename in files:
         # Find the index of the last occurrence of "_"
@@ -196,6 +226,8 @@ async def get_hash(id: str, background_tasks: BackgroundTasks):
         else:
             # If no dot found after the last underscore, consider the whole filename as the first part
             filename_parts = [filename]
+
+        id = process_request.id
 
         if filename_parts[0].endswith(id):
             processed_filename = check_if_processed(filename)
@@ -214,3 +246,22 @@ async def get_hash(id: str, background_tasks: BackgroundTasks):
 async def download_file(filename: str):
     file_path = os.path.join(DOWNLOAD_FOLDER, filename)  # Replace "your_directory" with the directory containing your files
     return FileResponse(file_path, filename=filename)
+
+class PurchaseRequest(BaseModel):
+    credit_card_number: str
+    pin: str
+
+@app.post("/purchase")
+async def process_purchase(purchase_request: PurchaseRequest):
+    # Access credit card number and pin from the request body
+    credit_card_number = purchase_request.credit_card_number
+    pin = purchase_request.pin
+
+    new_uuid = uuid.uuid4()
+
+    while new_uuid == "0c74fad5-7ae9-487b-8b49-8800ca511e50":
+        new_uuid = uuid.uuid4()
+        
+    credit_dict[new_uuid] = 5
+    
+    return {"message": "Purchase processed successfully", "credit_card_number": credit_card_number, "token": new_uuid}
