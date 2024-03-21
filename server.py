@@ -53,13 +53,10 @@ def get_and_remove_first_task(tasks_array):
 async def call_script(filename, background_tasks: BackgroundTasks):
     global task_id
 
-    print("task id: " + task_id)
-    print("filename: " + filename)
+    print("task id: " + task_id + ", filename: " + filename)
 
     processed_filename = check_if_run_full_filename(task_id)
     tasks.append(filename)
-
-    print(processed_filename)
 
     if task_id == "" or processed_filename != None: 
         try:
@@ -68,8 +65,6 @@ async def call_script(filename, background_tasks: BackgroundTasks):
             if first_task:
                 out_filename = filename
                 task_id = filename
-
-                print("processing " + filename)
 
                 # Asynchronously execute the subprocess
                 process = await asyncio.create_subprocess_exec(
@@ -209,7 +204,6 @@ def check_if_run(id: str):
             # If no dot found after the last underscore, consider the whole filename as the first part
             filename_parts = [filename]
 
-        print("fnp: " + filename_parts[0])
         if filename_parts[0].endswith(id):
             return filename
     return None

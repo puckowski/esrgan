@@ -149,7 +149,7 @@ def webui(arg1, arg2):
         # Example usage
         replace_high_rgb_with_transparent(arg2)
         
-        print("done:" + arg2)
+        print("done: " + arg2)
     elif has_partial_transparent_pixels(arg1):
         print("could not process; partially transparent: " + arg1)
     elif not has_fully_transparent:
@@ -163,7 +163,7 @@ def webui(arg1, arg2):
         # save the upscaled image
         upscaled_image.save(arg2)
 
-        print("done:" + arg2)
+        print("done: " + arg2)
     else:
         print("could not process; may be white pixels: " + arg1)
         
