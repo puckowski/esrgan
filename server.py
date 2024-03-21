@@ -257,7 +257,7 @@ async def get_hash(process_request: ProcessRequest, background_tasks: Background
         if filename_parts[0].endswith(id):
             processed_filename = check_if_run_full_filename(filename)
 
-            if processed_filename == False and is_image_less_than_1024x1024(os.path.join(UPLOAD_FOLDER, filename)) and is_image_filename(os.path.join(UPLOAD_FOLDER, filename)):
+            if processed_filename == None and is_image_less_than_1024x1024(os.path.join(UPLOAD_FOLDER, filename)) and is_image_filename(os.path.join(UPLOAD_FOLDER, filename)):
                 try:
                     background_tasks.add_task(call_script, filename, background_tasks)
                     return {"status": "submitted"}
