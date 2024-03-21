@@ -58,6 +58,8 @@ async def call_script(filename, background_tasks: BackgroundTasks):
     processed_filename = check_if_processed(task_id)
     tasks.append(filename)
 
+    print(processed_filename)
+    
     if task_id == "" or processed_filename != False: 
         try:
             # Get and remove the first task from the array
