@@ -121,6 +121,10 @@ def decrement_credit_count(uuid):
     if uuid in credit_dict:
         credit_dict[uuid] -= 1
 
+def increment_credit_count(uuid):
+    if uuid in credit_dict:
+        credit_dict[uuid] += 1
+
 @app.middleware("http")
 async def check_request_limit(request: Request, call_next):
     ip = get_ip(request)
@@ -264,6 +268,8 @@ async def get_hash(process_request: ProcessRequest, background_tasks: Background
                 except Exception as e:
                     return {"error": str(e)}
             elif processed_filename:
+                if get_credit_count(process_request.token) < 50:
+                    increment_credit_count(process_request.token)
                 return {"status": "done" }
     return {"error": "could not process" }
 
