@@ -68,7 +68,7 @@ async def call_script(filename, background_tasks: BackgroundTasks):
 
                 print("processing " + filename)
 
-                subprocess.Popen(["python", "esr.py", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename)], check=True)
+                subprocess.run(["python", "esr.py", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename)], check=True)
             return {"status": "processed"}
         except subprocess.CalledProcessError as e:
             return {"error": f"Error executing script: {e}"}
