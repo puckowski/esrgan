@@ -273,9 +273,7 @@ class ProcessRequest(BaseModel):
 
 @app.post("/run")
 async def get_hash(process_request: ProcessRequest, background_tasks: BackgroundTasks):
-    if get_credit_count(process_request.token) > 0:
-        decrement_credit_count(process_request.token)
-    else:
+    if get_credit_count(process_request.token) == 0:
         return {"error": "could not process" }
         
     files = os.listdir(UPLOAD_FOLDER)
@@ -304,29 +302,19 @@ async def get_hash(process_request: ProcessRequest, background_tasks: Background
                     index = tasks.index(filename)
 
                     if index >= 0:
-                        if get_credit_count(process_request.token) < 50:
-                            increment_credit_count(process_request.token)
-
                         return {"status": "already submitted"}
                     else:
-                        if get_credit_count(process_request.token) < 50:
-                            increment_credit_count(process_request.token)
-                        
                         {"error": "could not process; may be submitted" }
                 except ValueError:
                     try:
                         background_tasks.add_task(call_script, filename, background_tasks)
-                            
+
+                        decrement_credit_count(process_request.token)
+      
                         return {"status": "submitted"}
                     except Exception as e:
-                        if get_credit_count(process_request.token) < 50:
-                            increment_credit_count(process_request.token)
-
                         return {"error": str(e)}
             elif processed_filename:
-                if get_credit_count(process_request.token) < 50:
-                    increment_credit_count(process_request.token)
-
                 return {"status": "done" }
     return {"error": "could not process" }
 
