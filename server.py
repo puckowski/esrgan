@@ -9,6 +9,7 @@ import time
 from datetime import datetime, timedelta
 import uuid
 from pydantic import BaseModel
+import asyncio
 
 def is_image_less_than_1024x1024(image_path):
     try:
@@ -70,7 +71,13 @@ async def call_script(filename, background_tasks: BackgroundTasks):
 
                 print("processing " + filename)
 
-                subprocess.Popen(["python", "esr.py", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename)], check=True)
+                # Asynchronously execute the subprocess
+                process = await asyncio.create_subprocess_exec(
+                    "python", "esr.py", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename)
+                )
+
+                # Wait for the subprocess to complete
+                await process.wait()
             return {"status": "processed"}
         except subprocess.CalledProcessError as e:
             return {"error": f"Error executing script: {e}"}
