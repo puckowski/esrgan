@@ -38,6 +38,7 @@ def calculate_sha256(file_content):
     sha256_hash.update(file_content)
     return sha256_hash.hexdigest()
 
+all_tasks = []
 tasks = []
 task_id = ""
 ip_request_count = {}
@@ -63,6 +64,7 @@ async def call_script(filename, background_tasks: BackgroundTasks):
             # Get and remove the first task from the array
             first_task = get_and_remove_first_task(tasks)
             if first_task:
+                all_tasks.append(filename)
                 out_filename = filename
                 task_id = filename
 
@@ -204,6 +206,29 @@ async def check_upload_status(id: str):
         except ValueError:
             return {"id": id, "status": "not found"}
 
+@app.get("/refund/{id}/{token}")
+async def check_upload_status(id: str, token: str):
+    filename = check_if_run(id)
+    if filename:    
+        return {"filename": filename, "status": "uploaded"}
+    else:
+        try:
+            # Get the index of the string
+            index = tasks.index(id)
+
+            return {"id": id, "status": index}
+        except ValueError:
+            try:
+                # Get the index of the string
+                index = all_tasks.index(id)
+
+                if get_credit_count(token) < 50:
+                    increment_credit_count(token)
+
+                return {"status": "refunded"}
+            except ValueError:
+                return {"id": id, "status": "not found"}
+        
 def check_if_run(id: str):
     files = os.listdir(DOWNLOAD_FOLDER)
     for filename in files:
@@ -275,13 +300,30 @@ async def get_hash(process_request: ProcessRequest, background_tasks: Background
 
             if processed_filename == None and is_image_less_than_1024x1024(os.path.join(UPLOAD_FOLDER, filename)) and is_image_filename(os.path.join(UPLOAD_FOLDER, filename)):
                 try:
-                    background_tasks.add_task(call_script, filename, background_tasks)
-                    return {"status": "submitted"}
-                except Exception as e:
-                    return {"error": str(e)}
+                    # Get the index of the string
+                    index = tasks.index(filename)
+
+                    if index >= 0:
+                        try:
+                            background_tasks.add_task(call_script, filename, background_tasks)
+                            
+                            return {"status": "submitted"}
+                        except Exception as e:
+                            return {"error": str(e)}
+                    else:
+                        if get_credit_count(process_request.token) < 50:
+                            increment_credit_count(process_request.token)
+                        
+                        {"error": "could not process" }
+                except ValueError:
+                    if get_credit_count(process_request.token) < 50:
+                            increment_credit_count(process_request.token)
+
+                    return {"id": id, "status": "not found"}
             elif processed_filename:
                 if get_credit_count(process_request.token) < 50:
                     increment_credit_count(process_request.token)
+
                 return {"status": "done" }
     return {"error": "could not process" }
 
