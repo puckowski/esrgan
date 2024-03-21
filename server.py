@@ -10,11 +10,11 @@ from datetime import datetime, timedelta
 import uuid
 from pydantic import BaseModel
 
-def is_image_less_than_768x768(image_path):
+def is_image_less_than_1024x1024(image_path):
     try:
         with Image.open(image_path) as img:
             width, height = img.size
-            return width < 768 or height < 768
+            return width <= 1024 or height <= 1024
     except Exception as e:
         print(f"Error: {e}")
         return False
@@ -232,7 +232,7 @@ async def get_hash(process_request: ProcessRequest, background_tasks: Background
         if filename_parts[0].endswith(id):
             processed_filename = check_if_processed(filename)
 
-            if processed_filename == False and is_image_less_than_768x768(os.path.join(UPLOAD_FOLDER, filename)) and is_image_filename(os.path.join(UPLOAD_FOLDER, filename)):
+            if processed_filename == False and is_image_less_than_1024x1024(os.path.join(UPLOAD_FOLDER, filename)) and is_image_filename(os.path.join(UPLOAD_FOLDER, filename)):
                 try:
                     background_tasks.add_task(call_script, filename, background_tasks)
                     return {"status": "submitted"}
@@ -261,7 +261,7 @@ async def process_purchase(purchase_request: PurchaseRequest):
 
     while new_uuid == "0c74fad5-7ae9-487b-8b49-8800ca511e50":
         new_uuid = uuid.uuid4()
-        
+
     credit_dict[new_uuid] = 5
     
     return {"message": "Purchase processed successfully", "credit_card_number": credit_card_number, "token": new_uuid}
