@@ -274,7 +274,7 @@ class ProcessRequest(BaseModel):
 @app.post("/run")
 async def get_hash(process_request: ProcessRequest, background_tasks: BackgroundTasks):
     if get_credit_count(process_request.token) == 0:
-        return {"error": "could not process" }
+        return {"error": "not enough credits" }
         
     files = os.listdir(UPLOAD_FOLDER)
     for filename in files:
