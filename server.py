@@ -306,14 +306,17 @@ async def get_hash(process_request: ProcessRequest, background_tasks: Background
                     else:
                         {"error": "could not process; may be submitted" }
                 except ValueError:
-                    try:
-                        background_tasks.add_task(call_script, filename, background_tasks)
+                    if task_id != filename:
+                        try:
+                            background_tasks.add_task(call_script, filename, background_tasks)
 
-                        decrement_credit_count(process_request.token)
-      
-                        return {"status": "submitted"}
-                    except Exception as e:
-                        return {"error": str(e)}
+                            decrement_credit_count(process_request.token)
+        
+                            return {"status": "submitted"}
+                        except Exception as e:
+                            return {"error": str(e)}
+                    else:
+                        return {"status": "already submitted"}
             elif processed_filename:
                 return {"status": "done" }
     return {"error": "could not process" }
