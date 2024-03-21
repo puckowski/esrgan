@@ -77,7 +77,13 @@ async def call_script(filename, background_tasks: BackgroundTasks):
         except subprocess.CalledProcessError as e:
             return {"error": f"Error executing script: {e}"}
         finally:
-            time.sleep(5)  # Sleep for 5 seconds
+            # Asynchronously execute the subprocess
+            process = await asyncio.create_subprocess_exec(
+                "sleep", "5"
+            )
+
+            # Wait for the subprocess to complete
+            await process.wait()
 
             # Get and remove the first task from the array
             first_task = get_and_remove_first_task(tasks)
@@ -86,7 +92,13 @@ async def call_script(filename, background_tasks: BackgroundTasks):
             else:
                 print("No task to add")
     else:
-        time.sleep(5)  # Sleep for 5 seconds
+        # Asynchronously execute the subprocess
+        process = await asyncio.create_subprocess_exec(
+            "sleep", "5"
+        )
+
+        # Wait for the subprocess to complete
+        await process.wait()
 
         # Get and remove the first task from the array
         first_task = get_and_remove_first_task(tasks)
@@ -296,3 +308,7 @@ async def process_purchase(purchase_request: PurchaseRequest):
     credit_dict[str(new_uuid)] = 5
     
     return {"message": "Purchase processed successfully", "credit_card_number": credit_card_number, "token": new_uuid}
+
+@app.get("/credits")
+async def process_purchase(token: str):
+    return {"credits": credit_dict[token]}
