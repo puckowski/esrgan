@@ -141,12 +141,17 @@ def increment_credit_count(uuid):
 
 @app.middleware("http")
 async def check_request_limit(request: Request, call_next):
-    ip = get_ip(request)
-    count = get_request_count(ip)
-    if count > 20:
-        return JSONResponse(status_code=429, content={"detail":"Too many requests"})
+    # Check if the request path starts with '/status'
+    if not request.url.path.startswith('/status') and not request.url.path.startswith('/refund') and not request.url.path.startswith('/process') and not request.url.path.startswith('/purchase') and not request.url.path.startswith('/credits'):
+        ip = get_ip(request)
+        count = get_request_count(ip)
+        if count > 20:
+            return JSONResponse(status_code=429, content={"detail":"Too many requests"})
+        else:
+            increment_request_count(ip)
+            response = await call_next(request)
+            return response
     else:
-        increment_request_count(ip)
         response = await call_next(request)
         return response
      
