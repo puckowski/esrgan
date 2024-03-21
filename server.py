@@ -255,7 +255,7 @@ async def get_hash(process_request: ProcessRequest, background_tasks: Background
         id = process_request.id
 
         if filename_parts[0].endswith(id):
-            processed_filename = check_if_processed(filename)
+            processed_filename = check_if_run_full_filename(filename)
 
             if processed_filename == False and is_image_less_than_1024x1024(os.path.join(UPLOAD_FOLDER, filename)) and is_image_filename(os.path.join(UPLOAD_FOLDER, filename)):
                 try:
