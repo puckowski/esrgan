@@ -218,16 +218,32 @@ async def check_upload_status(id: str, token: str):
 
             return {"id": id, "status": index}
         except ValueError:
-            try:
-                # Get the index of the string
-                index = all_tasks.index(id)
+            # Find the index of the last occurrence of "_"
+            last_underscore_index = task_id.rfind("_")
 
-                if get_credit_count(token) < 50:
-                    increment_credit_count(token)
+            # Find the index of the first occurrence of "." after the last "_"
+            first_dot_index_after_last_underscore = task_id.find(".", last_underscore_index)
 
-                return {"status": "refunded"}
-            except ValueError:
-                return {"id": id, "status": "not found"}
+            if first_dot_index_after_last_underscore != -1:
+                # Split the filename at the first dot after the last underscore
+                filename_parts = [task_id[:first_dot_index_after_last_underscore], task_id[first_dot_index_after_last_underscore:]]
+            else:
+                # If no dot found after the last underscore, consider the whole filename as the first part
+                filename_parts = [task_id]
+
+            if filename_parts[0] != id:
+                try:
+                    # Get the index of the string
+                    index = all_tasks.index(id)
+
+                    if get_credit_count(token) < 50:
+                        increment_credit_count(token)
+
+                    return {"status": "refunded"}
+                except ValueError:
+                    return {"id": id, "status": "not found"}
+            else:
+                return {"status": "processing"}
         
 def check_if_run(id: str):
     files = os.listdir(DOWNLOAD_FOLDER)
