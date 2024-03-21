@@ -38,7 +38,7 @@ def calculate_sha256(file_content):
     return sha256_hash.hexdigest()
 
 tasks = []
-task_count = 0
+task_id = ""
 ip_request_count = {}
 credit_dict = {}
 credit_dict["0c74fad5-7ae9-487b-8b49-8800ca511e50"] = 99
@@ -50,33 +50,37 @@ def get_and_remove_first_task(tasks_array):
         return None
     
 async def call_script(filename, background_tasks: BackgroundTasks):
-    global task_count
+    global task_id
 
-    print("task count: " + str(task_count))
+    print("task id: " + task_id)
 
+    filename = check_if_processed(task_id)
     tasks.append(filename)
 
-    try:
-        # Get and remove the first task from the array
-        first_task = get_and_remove_first_task(tasks)
-        if first_task:
-            out_filename = filename
-            task_count += 1
+    if task_id == "" or filename != False: 
+        try:
+            # Get and remove the first task from the array
+            first_task = get_and_remove_first_task(tasks)
+            if first_task:
+                out_filename = filename
+                task_id = filename
 
-            print("processing " + filename)
+                print("processing " + filename)
 
-            subprocess.Popen(["python", "esr.py", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename)], check=True)
-        return {"status": "processed"}
-    except subprocess.CalledProcessError as e:
-        return {"error": f"Error executing script: {e}"}
-    finally:
-        task_count -= 1
+                subprocess.Popen(["python", "esr.py", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename)], check=True)
+            return {"status": "processed"}
+        except subprocess.CalledProcessError as e:
+            return {"error": f"Error executing script: {e}"}
+        finally:
+            time.sleep(5)  # Sleep for 5 seconds
 
-        if task_count < 0:
-            task_count = 0
-
-        print("task count: " + str(task_count))
-
+            # Get and remove the first task from the array
+            first_task = get_and_remove_first_task(tasks)
+            if first_task:
+                background_tasks.add_task(call_script, first_task, background_tasks)
+            else:
+                print("No task to add")
+    else:
         time.sleep(5)  # Sleep for 5 seconds
 
         # Get and remove the first task from the array
