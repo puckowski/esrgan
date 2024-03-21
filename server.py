@@ -55,12 +55,12 @@ async def call_script(filename, background_tasks: BackgroundTasks):
     print("task id: " + task_id)
     print("filename: " + filename)
 
-    processed_filename = check_if_processed(task_id)
+    processed_filename = check_if_run(task_id)
     tasks.append(filename)
 
     print(processed_filename)
-    
-    if task_id == "" or processed_filename != False: 
+
+    if task_id == "" or processed_filename != None: 
         try:
             # Get and remove the first task from the array
             first_task = get_and_remove_first_task(tasks)
@@ -186,8 +186,7 @@ async def check_upload_status(id: str):
         except ValueError:
             return {"id": id, "status": "not found"}
 
-@app.get("/process/{id}")
-async def check_process_status(id: str):
+def check_if_run(id: str):
     files = os.listdir(DOWNLOAD_FOLDER)
     for filename in files:
         # Find the index of the last occurrence of "_"
@@ -204,6 +203,14 @@ async def check_process_status(id: str):
             filename_parts = [filename]
 
         if filename_parts[0].endswith(id):
+            return filename
+    return None
+
+@app.get("/process/{id}")
+async def check_process_status(id: str):
+    has_run = check_if_run(id)
+
+    if has_run != None:
             return {"filename": filename, "status": "processed"}
     return {"id": id, "status": "not found"}
 
