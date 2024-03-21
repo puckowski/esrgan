@@ -75,6 +75,9 @@ async def call_script(filename, background_tasks: BackgroundTasks):
     finally:
         task_count -= 1
 
+        if task_count < 0:
+            task_count = 0
+
         time.sleep(5)  # Sleep for 5 seconds
 
         # Get and remove the first task from the array
