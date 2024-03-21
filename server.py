@@ -5,8 +5,6 @@ import subprocess
 import sys
 from fastapi.responses import FileResponse, JSONResponse
 from PIL import Image
-import time
-from datetime import datetime, timedelta
 import uuid
 from pydantic import BaseModel
 import asyncio
@@ -44,6 +42,8 @@ task_id = ""
 ip_request_count = {}
 credit_dict = {}
 credit_dict["0c74fad5-7ae9-487b-8b49-8800ca511e50"] = 99
+max_default_credits = 50
+max_ip_requests = 250
 
 def get_and_remove_first_task(tasks_array):
     if tasks_array:
@@ -141,11 +141,13 @@ def increment_credit_count(uuid):
 
 @app.middleware("http")
 async def check_request_limit(request: Request, call_next):
+    global max_ip_requests
+
     # Check if the request path starts with '/status'
     if not request.url.path.startswith('/status') and not request.url.path.startswith('/refund') and not request.url.path.startswith('/process') and not request.url.path.startswith('/purchase') and not request.url.path.startswith('/credits'):
         ip = get_ip(request)
         count = get_request_count(ip)
-        if count > 20:
+        if count > max_ip_requests:
             return JSONResponse(status_code=429, content={"detail":"Too many requests"})
         else:
             increment_request_count(ip)
@@ -200,20 +202,29 @@ def check_if_processed(id: str):
 @app.get("/status/{id}")
 async def check_upload_status(id: str):
     filename = check_if_processed(id)
-    if filename:    
-        return {"filename": filename, "status": "uploaded"}
+    if filename:  
+        try:
+            # Get the index of the string
+            index = tasks.index(id)
+
+            return {"filename": filename, "status": "uploaded", "priority": index}
+        except ValueError:
+            return {"filename": filename, "status": "uploaded"} 
     else:
         try:
             # Get the index of the string
             index = tasks.index(id)
 
-            return {"id": id, "status": index}
+            return {"id": id, "priority": index}
         except ValueError:
             return {"id": id, "status": "not found"}
 
 @app.get("/refund/{id}/{token}")
 async def check_upload_status(id: str, token: str):
     filename = check_if_run(id)
+    
+    global max_default_credits
+
     if filename:    
         return {"filename": filename, "status": "uploaded"}
     else:
@@ -243,7 +254,7 @@ async def check_upload_status(id: str, token: str):
                     # Get the index of the string
                     index = all_tasks.index(id)
 
-                    if get_credit_count(token) < 50:
+                    if get_credit_count(token) < max_default_credits:
                         increment_credit_count(token)
 
                     return {"status": "refunded"}
