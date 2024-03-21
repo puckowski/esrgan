@@ -231,8 +231,6 @@ async def check_upload_status(id: str, token: str):
                 # If no dot found after the last underscore, consider the whole filename as the first part
                 filename_parts = [task_id]
 
-            print(task_id + " , " + filename_parts[0] + " , " + id)
-
             if filename_parts[0].endswith(id):
                 return {"status": "processing"}
             else:
