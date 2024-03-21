@@ -55,7 +55,7 @@ async def call_script(filename, background_tasks: BackgroundTasks):
     print("task id: " + task_id)
     print("filename: " + filename)
 
-    processed_filename = check_if_run(task_id)
+    processed_filename = check_if_run_full_filename(task_id)
     tasks.append(filename)
 
     print(processed_filename)
@@ -204,6 +204,13 @@ def check_if_run(id: str):
 
         print("fnp: " + filename_parts[0])
         if filename_parts[0].endswith(id):
+            return filename
+    return None
+
+def check_if_run_full_filename(id: str):
+    files = os.listdir(DOWNLOAD_FOLDER)
+    for filename in files:
+        if filename == id:
             return filename
     return None
 
