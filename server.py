@@ -1,11 +1,12 @@
 import os
 import hashlib
-from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Request
 import subprocess
 import sys
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from PIL import Image
 import time
+from datetime import datetime, timedelta
 
 def is_image_less_than_768x768(image_path):
     try:
@@ -36,6 +37,7 @@ def calculate_sha256(file_content):
 
 tasks = []
 task_count = 0
+ip_request_count = {}
 
 def get_and_remove_first_task(tasks_array):
     if tasks_array:
@@ -77,11 +79,38 @@ async def call_script(filename, background_tasks: BackgroundTasks):
             background_tasks.add_task(call_script, first_task, background_tasks)
         else:
             print("No task to add")
-    
+
+# Function to increment request count for an IP
+def increment_request_count(ip):
+    if ip in ip_request_count:
+        ip_request_count[ip] += 1
+    else:
+        ip_request_count[ip] = 1
+
+def get_request_count(ip): 
+    if ip in ip_request_count:
+        return ip_request_count[ip]
+    else:
+        return 0
+
+def get_ip(request: Request):
+    return request.client.host
+
+@app.middleware("http")
+async def check_request_limit(request: Request, call_next):
+    ip = get_ip(request)
+    count = get_request_count(ip)
+    if count > 20:
+        return JSONResponse(status_code=429, content={"detail":"Too many requests"})
+    else:
+        increment_request_count(ip)
+        response = await call_next(request)
+        return response
+     
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
     if not file:
-        raise HTTPException(status_code=400, detail="No file provided")
+        raise JSONResponse(status_code=400, content={"detail":"No file provided"})
     
     # Read file content
     file_content = await file.read()
