@@ -106,6 +106,7 @@ def has_white_pixel(image_path):
     return False
 
 def webui(arg1, arg2):
+    print("running upscaler")
     load_upscalers()
 
     upscaler = UpscalerESRGAN(dirname=".")
