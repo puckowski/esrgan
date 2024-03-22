@@ -80,15 +80,11 @@ async def call_script(filename, token, background_tasks: BackgroundTasks):
                 # Decode the captured stdout
                 stdout_str = stdout.decode().strip()
 
-                print("output: ")
-                print (stdout_str)
-                print('test: upscaled: ' + os.path.join(DOWNLOAD_FOLDER, out_filename))
-
                 if stdout_str.endswith('upscaled: ' + os.path.join(DOWNLOAD_FOLDER, out_filename)) == False:
                     if get_credit_count(token) < max_default_credits or token == "0c74fad5-7ae9-487b-8b49-8800ca511e50":
                         increment_credit_count(token)
-                    else:
-                        print("error incrementing token credits")
+
+                    task_id = ""
 
             return {"status": "processing"}
         except subprocess.CalledProcessError as e:
@@ -296,7 +292,6 @@ async def check_process_status(id: str):
     has_run = check_if_run(id)
 
     files = os.listdir(UPLOAD_FOLDER)
-    print(len(files))
     for filename in files:
         # Find the index of the last occurrence of "_"
         last_underscore_index = filename.rfind("_")
@@ -310,8 +305,6 @@ async def check_process_status(id: str):
         else:
             # If no dot found after the last underscore, consider the whole filename as the first part
             filename_parts = [filename]
-
-        print(filename_parts[0] + ",  " + id + ", " + filename)
         
         if filename_parts[0].endswith(id):
             try:
