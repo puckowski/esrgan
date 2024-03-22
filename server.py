@@ -331,8 +331,23 @@ async def check_process_status(id: str):
                 if has_run != None:
                     return {"status": "processed"}
 
+    # Find the index of the last occurrence of "_"
+    last_underscore_index = task_id.rfind("_")
+
+    # Find the index of the first occurrence of "." after the last "_"
+    first_dot_index_after_last_underscore = task_id.find(".", last_underscore_index)
+
+    if first_dot_index_after_last_underscore != -1:
+        # Split the filename at the first dot after the last underscore
+        filename_parts = [task_id[:first_dot_index_after_last_underscore], task_id[first_dot_index_after_last_underscore:]]
+    else:
+        # If no dot found after the last underscore, consider the whole filename as the first part
+        filename_parts = [task_id]
+
     if has_run != None:
         return {"status": "processed"}
+    elif filename_parts[0] == id:
+        return {"status": "processing"}
     else:
         return {"status": "not found"}
 
