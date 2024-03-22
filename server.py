@@ -300,9 +300,38 @@ def check_if_run_full_filename(id: str):
 async def check_process_status(id: str):
     has_run = check_if_run(id)
 
+    files = os.listdir(UPLOAD_FOLDER)
+    for filename in files:
+        # Find the index of the last occurrence of "_"
+        last_underscore_index = filename.rfind("_")
+
+        # Find the index of the first occurrence of "." after the last "_"
+        first_dot_index_after_last_underscore = filename.find(".", last_underscore_index)
+
+        if first_dot_index_after_last_underscore != -1:
+            # Split the filename at the first dot after the last underscore
+            filename_parts = [filename[:first_dot_index_after_last_underscore], filename[first_dot_index_after_last_underscore:]]
+        else:
+            # If no dot found after the last underscore, consider the whole filename as the first part
+            filename_parts = [filename]
+
+        if filename_parts[0].endswith(id):
+            try:
+                # Get the index of the string
+                index = tasks.index(id)
+
+                if has_run != None:
+                    return {"status": "processed"}
+                else:
+                    return {"status": "processed", "priority": index}
+            except ValueError:
+                if has_run != None:
+                    return {"status": "processed"}
+
     if has_run != None:
-            return {"status": "processed", "filename": has_run}
-    return {"status": "not found"}
+        return {"status": "processed"}
+    else:
+        return {"status": "not found"}
 
 def is_image_filename(filename):
     return filename.lower().endswith(('.png', '.jpg', '.jpeg'))
