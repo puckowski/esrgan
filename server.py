@@ -71,15 +71,19 @@ async def call_script(filename, token, background_tasks: BackgroundTasks):
                 # Asynchronously execute the subprocess
                 process = await asyncio.create_subprocess_exec(
                     "python", "esr.py", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename),
-                    stdout=asyncio.subprocess.PIPE  # Capture stdout
+                    stdout=asyncio.subprocess.PIPE,  # Capture stdout
+                    stderr=asyncio.subprocess.PIPE   # Capture stderr
                 )
 
                 # Wait for the subprocess to complete
-                stdout, _ = await process.communicate()
+                stdout, stderr = await process.communicate()
 
                 # Decode the captured stdout
                 stdout_str = stdout.decode().strip()
+                stderr_str = stderr.decode().strip()
 
+                print("output: ")
+                print(stderr_str)
                 print (stdout_str)
                 print('upscaled: ' + os.path.join(DOWNLOAD_FOLDER, out_filename))
 
