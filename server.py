@@ -85,6 +85,8 @@ async def call_script(filename, token, background_tasks: BackgroundTasks):
                         increment_credit_count(token)
 
                     task_id = ""
+            
+                print(stdout_str)
 
             return {"status": "processing"}
         except subprocess.CalledProcessError as e:
