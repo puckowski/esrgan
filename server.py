@@ -211,21 +211,9 @@ def check_if_uploaded(id: str):
 async def check_upload_status(id: str):
     filename = check_if_uploaded(id)
     if filename:  
-        try:
-            # Get the index of the string
-            index = tasks.index(id)
-
-            return {"status": "uploaded", "filename": filename, "priority": index}
-        except ValueError:
-            return {"status": "uploaded", "filename": filename} 
+        return {"status": "uploaded"} 
     else:
-        try:
-            # Get the index of the string
-            index = tasks.index(id)
-
-            return {"status": "processing", "priority": index}
-        except ValueError:
-            return {"status": "not found"}
+        return {"status": "not found"}
 
 @app.get("/refund/{id}/{token}")
 async def check_upload_status(id: str, token: str):
@@ -346,7 +334,7 @@ async def check_process_status(id: str):
 
     if has_run != None:
         return {"status": "processed"}
-    elif filename_parts[0] == id:
+    elif filename_parts[0].endswith(id):
         return {"status": "processing"}
     else:
         return {"status": "not found"}
