@@ -51,7 +51,7 @@ def get_and_remove_first_task(tasks_array):
     else:
         return None
     
-async def call_script(filename, background_tasks: BackgroundTasks):
+async def call_script(filename, token, background_tasks: BackgroundTasks):
     global task_id
 
     print("task id: " + task_id + ", filename: " + filename)
@@ -74,10 +74,18 @@ async def call_script(filename, background_tasks: BackgroundTasks):
                 )
 
                 # Wait for the subprocess to complete
-                await process.wait()
-            return {"status": "processed"}
+                stdout, _ = await process.communicate()
+
+                # Decode the captured stdout
+                stdout_str = stdout.decode().strip()
+
+                if stdout_str.endswith('upscaled: ' + os.path.join(DOWNLOAD_FOLDER, out_filename)) == False:
+                    if get_credit_count(token) < max_default_credits:
+                        increment_credit_count(token)
+
+            return {"status": "processing"}
         except subprocess.CalledProcessError as e:
-            return {"error": f"Error executing script: {e}"}
+            return {"error": "could not process"}
         finally:
             # Asynchronously execute the subprocess
             process = await asyncio.create_subprocess_exec(
@@ -90,7 +98,7 @@ async def call_script(filename, background_tasks: BackgroundTasks):
             # Get and remove the first task from the array
             first_task = get_and_remove_first_task(tasks)
             if first_task:
-                background_tasks.add_task(call_script, first_task, background_tasks)
+                background_tasks.add_task(call_script, first_task, token, background_tasks)
             else:
                 print("No task to add")
     else:
@@ -105,7 +113,7 @@ async def call_script(filename, background_tasks: BackgroundTasks):
         # Get and remove the first task from the array
         first_task = get_and_remove_first_task(tasks)
         if first_task:
-            background_tasks.add_task(call_script, first_task, background_tasks)
+            background_tasks.add_task(call_script, first_task, token, background_tasks)
         else:
             print("No task to add")
 
@@ -176,9 +184,9 @@ async def upload_file(file: UploadFile = File(...)):
     with open(os.path.join(UPLOAD_FOLDER, hashed_filename), "wb") as f:
         f.write(file_content)
     
-    return {"filename": sha256_hash, "status": "uploaded"}
+    return {"status": "uploaded", "filename": sha256_hash}
 
-def check_if_processed(id: str):
+def check_if_uploaded(id: str):
     files = os.listdir(UPLOAD_FOLDER)
     for filename in files:
         # Find the index of the last occurrence of "_"
@@ -201,23 +209,23 @@ def check_if_processed(id: str):
 
 @app.get("/status/{id}")
 async def check_upload_status(id: str):
-    filename = check_if_processed(id)
+    filename = check_if_uploaded(id)
     if filename:  
         try:
             # Get the index of the string
             index = tasks.index(id)
 
-            return {"filename": filename, "status": "uploaded", "priority": index}
+            return {"status": "uploaded", "filename": filename, "priority": index}
         except ValueError:
-            return {"filename": filename, "status": "uploaded"} 
+            return {"status": "uploaded", "filename": filename} 
     else:
         try:
             # Get the index of the string
             index = tasks.index(id)
 
-            return {"id": id, "priority": index}
+            return {"status": "processing", "priority": index}
         except ValueError:
-            return {"id": id, "status": "not found"}
+            return {"status": "not found"}
 
 @app.get("/refund/{id}/{token}")
 async def check_upload_status(id: str, token: str):
@@ -226,13 +234,13 @@ async def check_upload_status(id: str, token: str):
     global max_default_credits
 
     if filename:    
-        return {"filename": filename, "status": "uploaded"}
+        return {"status": "uploaded", "filename": filename}
     else:
         try:
             # Get the index of the string
             index = tasks.index(id)
 
-            return {"id": id, "status": index}
+            return {"status": "processing", "priority": index}
         except ValueError:
             # Find the index of the last occurrence of "_"
             last_underscore_index = task_id.rfind("_")
@@ -259,7 +267,7 @@ async def check_upload_status(id: str, token: str):
 
                     return {"status": "refunded"}
                 except ValueError:
-                    return {"id": id, "status": "not found"}
+                    return {"status": "not found"}
         
 def check_if_run(id: str):
     files = os.listdir(DOWNLOAD_FOLDER)
@@ -293,8 +301,8 @@ async def check_process_status(id: str):
     has_run = check_if_run(id)
 
     if has_run != None:
-            return {"filename": has_run, "status": "processed"}
-    return {"id": id, "status": "not found"}
+            return {"status": "processed", "filename": has_run}
+    return {"status": "not found"}
 
 def is_image_filename(filename):
     return filename.lower().endswith(('.png', '.jpg', '.jpeg'))
@@ -340,18 +348,18 @@ async def get_hash(process_request: ProcessRequest, background_tasks: Background
                 except ValueError:
                     if task_id != filename:
                         try:
-                            background_tasks.add_task(call_script, filename, background_tasks)
+                            background_tasks.add_task(call_script, filename, process_request.token, background_tasks)
 
                             decrement_credit_count(process_request.token)
         
                             return {"status": "submitted"}
                         except Exception as e:
-                            return {"error": str(e)}
+                            return {"error": "could not process; try again later"}
                     else:
                         return {"status": "already submitted"}
             elif processed_filename:
-                return {"status": "done" }
-    return {"error": "could not process" }
+                return {"status": "done"}
+    return {"error": "could not process"}
 
 @app.get("/download/{filename}")
 async def download_file(filename: str):
@@ -375,7 +383,7 @@ async def process_purchase(purchase_request: PurchaseRequest):
 
     credit_dict[str(new_uuid)] = 5
     
-    return {"message": "Purchase processed successfully", "credit_card_number": credit_card_number, "token": new_uuid}
+    return {"status": "success", "token": new_uuid}
 
 @app.get("/credits/{token}")
 async def process_purchase(token: str):
