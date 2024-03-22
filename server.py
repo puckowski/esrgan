@@ -70,7 +70,8 @@ async def call_script(filename, token, background_tasks: BackgroundTasks):
 
                 # Asynchronously execute the subprocess
                 process = await asyncio.create_subprocess_exec(
-                    "python", "esr.py", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename)
+                    "python", "esr.py", os.path.join(UPLOAD_FOLDER, filename), os.path.join(DOWNLOAD_FOLDER, out_filename),
+                    stdout=asyncio.subprocess.PIPE  # Capture stdout
                 )
 
                 # Wait for the subprocess to complete
@@ -81,7 +82,7 @@ async def call_script(filename, token, background_tasks: BackgroundTasks):
 
                 print (stdout_str)
                 print('upscaled: ' + os.path.join(DOWNLOAD_FOLDER, out_filename))
-                
+
                 if stdout_str.endswith('upscaled: ' + os.path.join(DOWNLOAD_FOLDER, out_filename)) == False:
                     if get_credit_count(token) < max_default_credits:
                         increment_credit_count(token)
