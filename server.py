@@ -79,6 +79,9 @@ async def call_script(filename, token, background_tasks: BackgroundTasks):
                 # Decode the captured stdout
                 stdout_str = stdout.decode().strip()
 
+                print (stdout_str)
+                print('upscaled: ' + os.path.join(DOWNLOAD_FOLDER, out_filename))
+                
                 if stdout_str.endswith('upscaled: ' + os.path.join(DOWNLOAD_FOLDER, out_filename)) == False:
                     if get_credit_count(token) < max_default_credits:
                         increment_credit_count(token)
