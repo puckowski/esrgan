@@ -301,6 +301,7 @@ async def check_process_status(id: str):
     has_run = check_if_run(id)
 
     files = os.listdir(UPLOAD_FOLDER)
+    print(len(files))
     for filename in files:
         # Find the index of the last occurrence of "_"
         last_underscore_index = filename.rfind("_")
@@ -315,15 +316,17 @@ async def check_process_status(id: str):
             # If no dot found after the last underscore, consider the whole filename as the first part
             filename_parts = [filename]
 
+        print(filename_parts[0] + ",  " + id + ", " + filename)
+        
         if filename_parts[0].endswith(id):
             try:
                 # Get the index of the string
-                index = tasks.index(id)
+                index = tasks.index(filename)
 
                 if has_run != None:
                     return {"status": "processed"}
                 else:
-                    return {"status": "processed", "priority": index}
+                    return {"status": "processing", "priority": index}
             except ValueError:
                 if has_run != None:
                     return {"status": "processed"}
