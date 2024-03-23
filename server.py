@@ -8,6 +8,7 @@ from PIL import Image
 import uuid
 from pydantic import BaseModel
 import asyncio
+from fastapi.middleware.cors import CORSMiddleware
 
 def is_image_less_than_1024x1024(image_path):
     try:
@@ -30,6 +31,10 @@ if not os.path.exists(UPLOAD_FOLDER):
 DOWNLOAD_FOLDER = 'downloads'
 if not os.path.exists(DOWNLOAD_FOLDER):
     os.makedirs(DOWNLOAD_FOLDER)
+
+def log_message(message):
+    with open('log.txt', 'a+') as log_file:
+        log_file.write(message + '\n')
 
 def calculate_sha256(file_content):
     sha256_hash = hashlib.sha256()
@@ -147,13 +152,18 @@ def get_credit_count(uuid):
 def decrement_credit_count(uuid):
     if uuid in credit_dict:
         credit_dict[uuid] -= 1
+        log_message(uuid + ' credits: ' + credit_dict[uuid])
 
 def increment_credit_count(uuid):
     if uuid in credit_dict:
         credit_dict[uuid] += 1
+        log_message(uuid + ' credits: ' + credit_dict[uuid])
 
 @app.middleware("http")
 async def check_request_limit(request: Request, call_next):
+    if request.url.scheme == 'http':
+        return JSONResponse(status_code=400, content={"status": "https only"})
+    
     global max_ip_requests
 
     # Check if the request path starts with '/status'
@@ -169,7 +179,16 @@ async def check_request_limit(request: Request, call_next):
     else:
         response = await call_next(request)
         return response
-     
+
+# Allow requests from all origins, methods, and headers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
     if not file:
@@ -419,12 +438,13 @@ async def process_purchase(purchase_request: PurchaseRequest):
         new_uuid = uuid.uuid4()
 
     credit_dict[str(new_uuid)] = 5
+    log_message(new_uuid + ' credits: ' + credit_dict[str(new_uuid)])
     
     return {"status": "success", "token": new_uuid}
 
 @app.get("/credits/{token}")
 async def process_purchase(token: str):
     if token in credit_dict:
-        return {"credits": credit_dict[token]}
+        return {"credits": credit_dict[token], "token": token}
     else:
         return {"credits": 0}
