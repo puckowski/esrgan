@@ -438,7 +438,7 @@ async def process_purchase(purchase_request: PurchaseRequest):
         new_uuid = uuid.uuid4()
 
     credit_dict[str(new_uuid)] = 5
-    log_message(new_uuid + ' credits: ' + credit_dict[str(new_uuid)])
+    log_message(str(new_uuid) + ' credits: ' + credit_dict[str(new_uuid)])
     
     return {"status": "success", "token": new_uuid}
 
