@@ -152,12 +152,12 @@ def get_credit_count(uuid):
 def decrement_credit_count(uuid):
     if uuid in credit_dict:
         credit_dict[uuid] -= 1
-        log_message(uuid + ' credits: ' + credit_dict[uuid])
+        log_message(uuid + ' credits: ' + str(credit_dict[uuid]))
 
 def increment_credit_count(uuid):
     if uuid in credit_dict:
         credit_dict[uuid] += 1
-        log_message(uuid + ' credits: ' + credit_dict[uuid])
+        log_message(uuid + ' credits: ' + str(credit_dict[uuid]))
 
 @app.middleware("http")
 async def check_request_limit(request: Request, call_next):
@@ -438,7 +438,7 @@ async def process_purchase(purchase_request: PurchaseRequest):
         new_uuid = uuid.uuid4()
 
     credit_dict[str(new_uuid)] = 5
-    log_message(str(new_uuid) + ' credits: ' + credit_dict[str(new_uuid)])
+    log_message(str(new_uuid) + ' credits: ' + str(credit_dict[str(new_uuid)]))
     
     return {"status": "success", "token": new_uuid}
 
